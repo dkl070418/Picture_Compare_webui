@@ -23,16 +23,17 @@ async function api(path, options = {}) {
     opts.body = JSON.stringify(opts.body);
   }
   const res = await fetch(path, opts);
-  if (res.status === 401) {
-    showLogin();
-    throw new Error("未登录");
-  }
   if (!res.ok) {
-    let detail = res.statusText;
+    let detail = res.statusText || "请求失败";
     try {
       const data = await res.json();
-      detail = data.detail || detail;
+      if (typeof data.detail === "string") detail = data.detail;
+      else if (data.detail) detail = JSON.stringify(data.detail);
     } catch (_) {}
+    // Only force logout when the session itself is invalid
+    if (res.status === 401 && detail === "未登录") {
+      showLogin();
+    }
     throw new Error(detail);
   }
   if (res.status === 204) return null;

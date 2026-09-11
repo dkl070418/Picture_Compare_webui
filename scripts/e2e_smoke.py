@@ -191,7 +191,7 @@ def main():
         "/api/admin/password",
         json={"current_password": "wrong", "new_password": "newpass99"},
     )
-    check("change password wrong current 401", r.status_code == 401, r.text)
+    check("change password wrong current 400", r.status_code == 400, r.text)
 
     r = client.post(
         "/api/admin/password",

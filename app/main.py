@@ -125,7 +125,8 @@ def change_password(
     _: None = Depends(require_admin),
 ):
     if not settings.verify_password(body.current_password):
-        raise HTTPException(status_code=401, detail="当前口令不正确")
+        # 400, not 401: session is still valid; only the current password is wrong
+        raise HTTPException(status_code=400, detail="当前口令不正确")
     if body.new_password != body.new_password.strip():
         raise HTTPException(status_code=400, detail="新口令不能以空白字符开头或结尾")
     if body.current_password == body.new_password:
