@@ -107,15 +107,18 @@ button, input { font: inherit; color: inherit; }
   touch-action: none;
 }
 
-/* Split mode */
+/* Split mode — portrait default: stacked equal rows */
 .stage.mode-split {
   display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr;
   gap: 2px;
   background: #000;
 }
 .stage.mode-split .pane {
   position: relative;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
   background: #000;
 }
@@ -130,6 +133,7 @@ button, input { font: inherit; color: inherit; }
 @media (min-aspect-ratio: 1/1) and (min-width: 700px) {
   .stage.mode-split {
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
   }
 }
 

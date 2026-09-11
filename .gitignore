@@ -8,3 +8,6 @@ __pycache__/
 .worktrees/
 *.log
 
+output/
+data_fe_e2e/
+data_fe_diag/
