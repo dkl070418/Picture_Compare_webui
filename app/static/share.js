@@ -75,17 +75,24 @@
     const stage = $("#stage");
     const sw = stage.clientWidth;
     const sh = stage.clientHeight;
-    // keep at least some image on screen when zoomed
-    const maxOffX = sw * (zoom.scale - 0.2);
-    const maxOffY = sh * (zoom.scale - 0.2);
+    const maxOffX = sw * (zoom.scale - 0.15);
+    const maxOffY = sh * (zoom.scale - 0.15);
     zoom.x = Math.min(maxOffX, Math.max(-maxOffX, zoom.x));
     zoom.y = Math.min(maxOffY, Math.max(-maxOffY, zoom.y));
+  }
+
+  /**
+   * Layout center of transform-origin (50% 50%) in viewport coords.
+   * Images use object-fit and fill their pane; wipe/fade panes fill the stage.
+   */
+  function originScreen() {
+    const rect = stageRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   }
 
   function applyZoom() {
     clampPan();
     const t = `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.scale})`;
-    // transform-origin center keeps contain-fit centered when scale=1
     [$("#img-a"), $("#img-b")].forEach((img) => {
       if (!img) return;
       img.style.transformOrigin = "50% 50%";
@@ -106,24 +113,38 @@
     applyZoom();
   }
 
-  function setZoomAt(nextScale, clientX, clientY) {
-    const rect = stageRect();
-    const px = clientX - rect.left;
-    const py = clientY - rect.top;
-    const prev = zoom.scale;
-    const s = Math.min(zoom.maxScale, Math.max(zoom.minScale, nextScale));
-    // zoom around pointer: keep image point under finger stable
-    const ix = (px - zoom.x) / prev;
-    const iy = (py - zoom.y) / prev;
-    zoom.scale = s;
-    zoom.x = px - ix * s;
-    zoom.y = py - iy * s;
-    if (s <= 1.02) {
+  /**
+   * CSS: screen = O + s*(p-O) + t  (O = originScreen, t = zoom.xy)
+   * Keep layout point under (fromX,fromY) stuck to (toX,toY) while scale → newScale.
+   */
+  function zoomKeepingPoint(fromX, fromY, toX, toY, newScale, prevScale, prevX, prevY) {
+    const O = originScreen();
+    const s0 = Math.max(0.0001, prevScale);
+    const s1 = Math.min(zoom.maxScale, Math.max(zoom.minScale, newScale));
+    const relX = (fromX - O.x - prevX) / s0;
+    const relY = (fromY - O.y - prevY) / s0;
+    zoom.scale = s1;
+    zoom.x = toX - O.x - relX * s1;
+    zoom.y = toY - O.y - relY * s1;
+    if (s1 <= 1.02) {
       zoom.scale = 1;
       zoom.x = 0;
       zoom.y = 0;
     }
     applyZoom();
+  }
+
+  function setZoomAt(nextScale, clientX, clientY) {
+    zoomKeepingPoint(
+      clientX,
+      clientY,
+      clientX,
+      clientY,
+      nextScale,
+      zoom.scale,
+      zoom.x,
+      zoom.y
+    );
   }
 
   function zoomTo100() {
@@ -294,28 +315,32 @@
   }
 
   function onHandleDown(e) {
-    if (state.mode !== "wipe" || isZoomed()) return;
+    if (state.mode !== "wipe") return;
     const p = e.touches ? e.touches[0] : e;
     state.wipePos = wipePosFrom(p.clientX, p.clientY);
     applyWipe();
-    e.preventDefault();
   }
 
   function bindGestures() {
     const stage = $("#stage");
     const handle = $("#wipe-handle");
 
-    // --- mouse: wipe handle + wheel zoom + drag pan ---
-    let mousePan = null;
+    // --- wipe handle: ALWAYS draggable, even when zoomed ---
+    let handleDrag = false;
+
+    function handleMoveFrom(e) {
+      const p = e.touches ? e.touches[0] : e;
+      state.wipePos = wipePosFrom(p.clientX, p.clientY);
+      applyWipe();
+    }
+
     handle.addEventListener("mousedown", (e) => {
-      if (e.button !== 0) return;
+      if (e.button !== 0 || state.mode !== "wipe") return;
+      handleDrag = true;
       onHandleDown(e);
-      const move = (ev) => {
-        if (state.mode !== "wipe" || isZoomed()) return;
-        state.wipePos = wipePosFrom(ev.clientX, ev.clientY);
-        applyWipe();
-      };
+      const move = (ev) => handleMoveFrom(ev);
       const up = () => {
+        handleDrag = false;
         window.removeEventListener("mousemove", move);
         window.removeEventListener("mouseup", up);
       };
@@ -325,9 +350,43 @@
       e.stopPropagation();
     });
 
+    handle.addEventListener(
+      "touchstart",
+      (e) => {
+        if (state.mode !== "wipe" || !e.touches.length) return;
+        handleDrag = true;
+        onHandleDown(e);
+        e.preventDefault();
+        e.stopPropagation();
+      },
+      { passive: false }
+    );
+
+    handle.addEventListener(
+      "touchmove",
+      (e) => {
+        if (!handleDrag) return;
+        handleMoveFrom(e);
+        e.preventDefault();
+        e.stopPropagation();
+      },
+      { passive: false }
+    );
+
+    handle.addEventListener(
+      "touchend",
+      (e) => {
+        handleDrag = false;
+        e.stopPropagation();
+      },
+      { passive: true }
+    );
+
+    // --- mouse stage: pan when zoomed, wipe when not ---
+    let mousePan = null;
     stage.addEventListener("mousedown", (e) => {
       if (e.button !== 0) return;
-      // zoomed → pan; wipe mode & not zoomed → wipe
+      if (e.target.closest("#wipe-handle") || e.target.closest("#fade-slider")) return;
       if (isZoomed()) {
         mousePan = { x: e.clientX, y: e.clientY };
         stage.classList.add("dragging");
@@ -372,29 +431,46 @@
       { passive: false }
     );
 
-    // double-click desktop / double-tap
-    let lastTap = 0;
     stage.addEventListener("dblclick", (e) => {
+      if (e.target.closest("#wipe-handle") || e.target.closest("#fade-slider")) return;
       if (isZoomed()) zoomFit();
       else zoomTo100();
       e.preventDefault();
     });
 
-    // --- touch: 1 finger wipe-or-pan, 2 finger pinch+pan ---
+    // --- touch: handle owns wipe; stage: pan when zoomed / wipe when not; 2-finger pinch ---
     let touchMode = null; // 'wipe' | 'pan' | 'pinch'
     let pinch = null;
     let panLast = null;
-    let tapTimer = null;
+    let lastTap = 0;
+
+    function nearHandle(t) {
+      if (state.mode !== "wipe") return false;
+      const hr = handle.getBoundingClientRect();
+      // generous hit slop for fat fingers
+      const pad = 18;
+      return (
+        t.clientX >= hr.left - pad &&
+        t.clientX <= hr.right + pad &&
+        t.clientY >= hr.top - pad &&
+        t.clientY <= hr.bottom + pad
+      );
+    }
 
     stage.addEventListener(
       "touchstart",
       (e) => {
+        if (handleDrag) return;
+        if (e.target.closest("#fade-slider")) return;
+
         if (e.touches.length === 1) {
           const t = e.touches[0];
+          if (nearHandle(t)) {
+            // let handle listener deal with it (it will stopPropagation)
+            return;
+          }
           const now = Date.now();
           if (now - lastTap < 280) {
-            // double tap
-            clearTimeout(tapTimer);
             lastTap = 0;
             if (isZoomed()) zoomFit();
             else zoomTo100();
@@ -434,29 +510,24 @@
     stage.addEventListener(
       "touchmove",
       (e) => {
+        if (handleDrag) return;
         if (touchMode === "pinch" && e.touches.length === 2 && pinch) {
           const [a, b] = e.touches;
           const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
           const cx = (a.clientX + b.clientX) / 2;
           const cy = (a.clientY + b.clientY) / 2;
           const next = pinch.scale * (dist / Math.max(1, pinch.dist));
-          // pinch around midpoint; also allow two-finger pan
-          const rect = stageRect();
-          const px = pinch.cx - rect.left;
-          const py = pinch.cy - rect.top;
-          const ix = (px - pinch.x) / Math.max(0.0001, pinch.scale);
-          const iy = (py - pinch.y) / Math.max(0.0001, pinch.scale);
-          zoom.scale = Math.min(zoom.maxScale, Math.max(zoom.minScale, next));
-          const ncx = cx - rect.left;
-          const ncy = cy - rect.top;
-          zoom.x = ncx - ix * zoom.scale;
-          zoom.y = ncy - iy * zoom.scale;
-          if (zoom.scale <= 1.02) {
-            zoom.scale = 1;
-            zoom.x = 0;
-            zoom.y = 0;
-          }
-          applyZoom();
+          // Keep image point under the original midpoint glued to the current midpoint
+          zoomKeepingPoint(
+            pinch.cx,
+            pinch.cy,
+            cx,
+            cy,
+            next,
+            pinch.scale,
+            pinch.x,
+            pinch.y
+          );
           e.preventDefault();
           return;
         }
@@ -480,28 +551,21 @@
     );
 
     stage.addEventListener("touchend", (e) => {
+      if (handleDrag) return;
       if (e.touches.length < 2) pinch = null;
       if (e.touches.length === 0) {
         touchMode = null;
         panLast = null;
       } else if (e.touches.length === 1) {
-        // drop from pinch to pan
         touchMode = isZoomed() ? "pan" : state.mode === "wipe" ? "wipe" : "pan";
         panLast = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
     });
 
-    // fade slider should not trigger stage gestures
-    $("#fade-slider").addEventListener(
-      "touchstart",
-      (e) => e.stopPropagation(),
-      { passive: true }
-    );
-    $("#fade-slider").addEventListener(
-      "mousedown",
-      (e) => e.stopPropagation(),
-      false
-    );
+    $("#fade-slider").addEventListener("touchstart", (e) => e.stopPropagation(), {
+      passive: true,
+    });
+    $("#fade-slider").addEventListener("mousedown", (e) => e.stopPropagation(), false);
   }
 
   function bindUI() {
