@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <title>图片对比</title>
+  <link rel="stylesheet" href="/static/share.css" />
+</head>
+<body>
+  <div id="loading" class="center-msg">加载中…</div>
+  <div id="error" class="center-msg hidden"></div>
+
+  <div id="app" class="hidden">
+    <header class="top">
+      <div class="title-block">
+        <h1 id="share-title">图片对比</h1>
+        <p id="share-sub"></p>
+      </div>
+      <div class="modes" role="tablist" aria-label="对比模式">
+        <button class="mode active" data-mode="split" title="并排 (1)">并排</button>
+        <button class="mode" data-mode="wipe" title="擦除 (2)">擦除</button>
+        <button class="mode" data-mode="fade" title="叠透 (3)">叠透</button>
+      </div>
+    </header>
+
+    <main class="stage-wrap">
+      <div id="stage" class="stage mode-split">
+        <div class="pane pane-a">
+          <img id="img-a" alt="A" draggable="false" />
+          <span class="tag" id="tag-a">A</span>
+        </div>
+        <div class="pane pane-b" id="pane-b">
+          <img id="img-b" alt="B" draggable="false" />
+          <span class="tag" id="tag-b">B</span>
+        </div>
+        <div id="wipe-handle" class="wipe-handle hidden" aria-hidden="true">
+          <div class="wipe-line"></div>
+          <div class="wipe-knob">⇔</div>
+        </div>
+        <div id="fade-slider" class="fade-slider hidden">
+          <label>透明度 <span id="fade-val">50%</span></label>
+          <input id="fade-range" type="range" min="0" max="100" value="50" />
+        </div>
+      </div>
+    </main>
+
+    <footer class="dock">
+      <div class="picker">
+        <div class="picker-col">
+          <span class="picker-label">A</span>
+          <div class="thumbs" id="thumbs-a"></div>
+        </div>
+        <div class="picker-col">
+          <span class="picker-label">B</span>
+          <div class="thumbs" id="thumbs-b"></div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    window.__SHARE_ID__ = "__SHARE_ID__";
+  </script>
+  <script src="/static/share.js"></script>
+</body>
+</html>

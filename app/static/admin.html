@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>图片对比 · 管理</title>
+  <link rel="stylesheet" href="/static/admin.css" />
+</head>
+<body>
+  <div id="login-view" class="login-wrap hidden">
+    <form id="login-form" class="login-card">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div>
+          <h1>图片对比</h1>
+          <p>管理后台</p>
+        </div>
+      </div>
+      <label class="field">
+        <span>管理员口令</span>
+        <input type="password" id="login-password" autocomplete="current-password" required />
+      </label>
+      <button type="submit" class="btn primary block">登录</button>
+      <p id="login-error" class="error"></p>
+    </form>
+  </div>
+
+  <div id="app-view" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand compact">
+        <div class="brand-mark"></div>
+        <span>图片对比</span>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" data-tab="library">图库</button>
+        <button class="nav-item" data-tab="groups">对比组</button>
+        <button class="nav-item" data-tab="shares">分享</button>
+      </nav>
+      <div class="sidebar-foot">
+        <button id="btn-logout" class="btn ghost">退出登录</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h2 id="page-title">图库</h2>
+        <div class="top-actions" id="library-actions">
+          <button id="btn-share-selected" class="btn primary" disabled>生成分享</button>
+          <button id="btn-group-selected" class="btn" disabled>新建对比组</button>
+          <button id="btn-delete-selected" class="btn danger" disabled>删除</button>
+        </div>
+      </header>
+
+      <section id="tab-library" class="tab active">
+        <div id="dropzone" class="dropzone">
+          <div class="dz-inner">
+            <strong>拖拽图片到此处</strong>
+            <span>或 <label class="linklike" for="file-input">选择文件</label> · JPEG / PNG / WebP / GIF · 单张 ≤ 50MB</span>
+            <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden />
+          </div>
+          <div id="upload-list" class="upload-list"></div>
+        </div>
+        <div id="library-grid" class="grid"></div>
+        <p id="library-empty" class="empty hidden">还没有图片，先上传一些吧。</p>
+      </section>
+
+      <section id="tab-groups" class="tab">
+        <form id="group-form" class="panel-form">
+          <input id="group-name" placeholder="对比组名称，如「皮肤纹理」" required maxlength="256" />
+          <button type="submit" class="btn primary">创建对比组</button>
+          <p class="hint">先在图库勾选图片，再回到这里创建。</p>
+        </form>
+        <div id="groups-list" class="cards"></div>
+      </section>
+
+      <section id="tab-shares" class="tab">
+        <form id="share-form" class="panel-form">
+          <input id="share-title" placeholder="分享标题（可选）" maxlength="256" />
+          <button type="submit" class="btn primary">用已选图片生成分享</button>
+          <p class="hint">在图库勾选图片后生成；分享页只能看到这几张。</p>
+        </form>
+        <div id="shares-list" class="cards"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <dialog id="group-edit-dialog">
+    <form method="dialog" id="group-edit-form" class="dialog-form">
+      <h3>编辑对比组</h3>
+      <input type="hidden" id="ge-id" />
+      <label class="field"><span>名称</span><input id="ge-name" required /></label>
+      <div id="ge-images" class="mini-grid"></div>
+      <div class="dialog-actions">
+        <button value="cancel" class="btn">取消</button>
+        <button id="ge-save" value="default" class="btn primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/static/admin.js"></script>
+</body>
+</html>
