@@ -248,18 +248,29 @@ def run_ui(share_id: str) -> int:
             timeout=8000,
         )
         check("image A loaded", True)
-        check("default mode is split", "mode-split" in page.get_attribute("#stage", "class"))
+        check("default mode is wipe", "mode-wipe" in (page.get_attribute("#stage", "class") or ""))
+        check(
+            "default wipe has clip-path",
+            "inset" in (page.eval_on_selector("#pane-b", "el => el.style.clipPath") or ""),
+        )
         thumbs_a = page.locator("#thumbs-a .thumb").count()
         check("only shared images in picker A", thumbs_a == 4, f"count={thumbs_a}")
+        page.screenshot(path=str(SHOTS / "06_share_wipe_desktop.png"))
+
+        # Switch to split — must clear wipe clip-path (was cutting right image)
+        page.click('.mode[data-mode="split"]')
+        page.wait_for_timeout(200)
+        check("split mode active", "mode-split" in (page.get_attribute("#stage", "class") or ""))
+        clip_split = page.eval_on_selector("#pane-b", "el => el.style.clipPath")
+        check("split clears clip-path", clip_split in ("", "none"), repr(clip_split))
         page.screenshot(path=str(SHOTS / "05_share_split_desktop.png"))
 
-        # Switch to wipe
+        # Switch back to wipe
         page.click('.mode[data-mode="wipe"]')
         page.wait_for_timeout(200)
         cls = page.get_attribute("#stage", "class")
         check("wipe mode active", "mode-wipe" in (cls or ""), cls or "")
         check("wipe handle visible", page.locator("#wipe-handle").is_visible())
-        page.screenshot(path=str(SHOTS / "06_share_wipe_desktop.png"))
 
         # Drag wipe handle
         box = page.locator("#stage").bounding_box()

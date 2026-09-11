@@ -8,7 +8,7 @@
     title: "",
     indexA: 0,
     indexB: 1,
-    mode: "split", // split | wipe | fade
+    mode: "wipe", // split | wipe | fade — default wipe
     wipePos: 0.5, // 0..1 along the divider axis
     fade: 0.5,
   };
@@ -38,6 +38,11 @@
   function applyWipe() {
     const paneB = $("#pane-b");
     const handle = $("#wipe-handle");
+    // Only clip in wipe mode — otherwise split/fade keep a stale clip-path
+    if (state.mode !== "wipe" || state.images.length < 2) {
+      paneB.style.clipPath = "";
+      return;
+    }
     const p = Math.min(0.98, Math.max(0.02, state.wipePos));
     const portrait = isPortraitLayout();
     if (portrait) {
@@ -65,7 +70,11 @@
 
   function applyFade() {
     const paneB = $("#pane-b");
-    paneB.style.opacity = String(state.fade);
+    if (state.mode !== "fade" || state.images.length < 2) {
+      paneB.style.opacity = "";
+    } else {
+      paneB.style.opacity = String(state.fade);
+    }
     $("#fade-range").value = String(Math.round(state.fade * 100));
     $("#fade-val").textContent = `${Math.round(state.fade * 100)}%`;
   }
@@ -272,7 +281,7 @@
 
       state.indexA = 0;
       state.indexB = state.images.length > 1 ? 1 : 0;
-      setMode("split");
+      setMode("wipe");
       $("#loading").classList.add("hidden");
       $("#app").classList.remove("hidden");
       renderImages();
