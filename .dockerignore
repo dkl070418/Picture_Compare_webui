@@ -1,0 +1,17 @@
+.git
+.worktrees
+data
+data_*
+output
+test_fixtures
+docs
+scripts
+__pycache__
+*.pyc
+*.log
+*.db
+.env
+start.ps1
+Dockerfile
+docker-compose.yml
+.dockerignore

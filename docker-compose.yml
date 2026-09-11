@@ -1,0 +1,12 @@
+services:
+  picture-compare:
+    image: crpi-wjscuxkxm163odo3.cn-hangzhou.personal.cr.aliyuncs.com/dkl091219/picture-compare:1.0.0
+    container_name: picture-compare
+    ports:
+      - "18765:18765"
+    volumes:
+      - ./data:/data
+    environment:
+      ADMIN_PASSWORD: "d7758258"
+      PORT: "18765"
+    restart: unless-stopped
