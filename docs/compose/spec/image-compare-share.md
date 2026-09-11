@@ -1,14 +1,25 @@
 ---
 feature: image-compare-share
-status: designed
+status: delivered
 updated: 2026-02-20
 branch: feature/image-compare-share
-commits: 36dd1b6..36dd1b6
+commits: 36dd1b6..5df5a6b
 ---
 
 # Image Compare Share
 
 ## Report
+
+**What was built** — 基于嵌入式 Python 的本地图片对比分享服务。管理员口令登录后可在现代化后台上传图片、编辑备注、创建对比组，并勾选子集生成分享链接。分享页默认并排展示前两张图，支持并排 / 擦除滑杆 / 透明度叠加三种模式，仅暴露分享图集，适配手机横竖屏。原图仅在属于未撤销分享或管理员会话时可访问。
+
+**Verification** — `scripts/e2e_smoke.py` 33/33 PASS（含 XSS 注入与 `$$` 回归）；`scripts/live_check.py` 11/11 PASS；`scripts/fe_e2e.py` Playwright 前端 23/23 PASS（登录、上传、选中、备注、分享页三模式、擦除拖拽、缩略图切换、竖屏/横屏、无 JS 错误）。复审确认 CRITICAL 修复有效。
+
+**Journey log**
+- 首版分享页 XSS：`replace` 原始 path 进 `<script>`；改为 `json.dumps` + `<`/`>` unicode 转义。
+- `share.js` 漏定义 `$$` 导致模式切换全挂；API 冒烟测不出，需 Playwright 真浏览器。
+- 竖屏并排缺 `grid-template-rows: 1fr 1fr`，行高被内容撑开；诊断脚本确认 626+626 后修复。
+- 嵌入式 Python 会优先用用户 site-packages，缺 pydantic/click 时需对 `D:\TOOLS\embedded\python\python.exe -m pip` 补装。
+- 沙箱禁止 `git worktree add`，feature 在主检出分支上落地。
 
 ## [S1] Problem
 
@@ -167,11 +178,11 @@ SQLite 表：`images`、`groups`、`shares`；有序 id 列表以 JSON 文本列
 
 ## Tasks
 
-- [ ] T1: 项目骨架与启动 — `app/` 包、config、SQLite models、`start.ps1`、可 `uvicorn` 启动并 200 `/api/me` (covers: S2.1, S2.2, S2.8)
-- [ ] T2: 鉴权 API — login/logout/me + session cookie + admin 依赖 (covers: S2.3)
-- [ ] T3: 图片上传/列表/备注/删除 + 缩略图 (covers: S2.4 admin images, S2.7)
-- [ ] T4: 对比组 CRUD (covers: S2.4 groups)
-- [ ] T5: 分享 CRUD + 公开 share API + 文件访问控制 (covers: S2.4 share, S2.3 files)
-- [ ] T6: 管理后台前端 — 登录、图库网格、上传、分组、分享管理 (covers: S2.5)
-- [ ] T7: 分享对比前端 — 三模式、图对选择、移动横竖屏 (covers: S2.6)
-- [ ] T8: 端到端验证 — 启动服务、API 冒烟、页面结构检查 (covers: S2.1, S2.4, S2.6)
+- [x] T1: 项目骨架与启动 — `app/` 包、config、SQLite models、`start.ps1`、可 `uvicorn` 启动并 200 `/api/me` (covers: S2.1, S2.2, S2.8)
+- [x] T2: 鉴权 API — login/logout/me + session cookie + admin 依赖 (covers: S2.3)
+- [x] T3: 图片上传/列表/备注/删除 + 缩略图 (covers: S2.4 admin images, S2.7)
+- [x] T4: 对比组 CRUD (covers: S2.4 groups)
+- [x] T5: 分享 CRUD + 公开 share API + 文件访问控制 (covers: S2.4 share, S2.3 files)
+- [x] T6: 管理后台前端 — 登录、图库网格、上传、分组、分享管理 (covers: S2.5)
+- [x] T7: 分享对比前端 — 三模式、图对选择、移动横竖屏 (covers: S2.6)
+- [x] T8: 端到端验证 — 启动服务、API 冒烟、页面结构检查 (covers: S2.1, S2.4, S2.6)
