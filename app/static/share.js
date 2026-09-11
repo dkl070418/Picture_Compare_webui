@@ -180,11 +180,58 @@
     applyZoom();
   }
 
+  function clearTagsFromWipe() {
+    const tagA = $("#tag-a");
+    const tagB = $("#tag-b");
+    [tagA, tagB].forEach((el) => {
+      if (!el) return;
+      el.style.top = "";
+      el.style.bottom = "";
+      el.style.left = "";
+      el.style.right = "";
+      el.style.transform = "";
+    });
+  }
+
+  /** Move A/B note chips so they ride the wipe divider (always visible when zoomed). */
+  function positionTagsOnWipeLine(p, portrait) {
+    const tagA = $("#tag-a");
+    const tagB = $("#tag-b");
+    if (!tagA || !tagB) return;
+    const pct = (p * 100).toFixed(3);
+    if (portrait) {
+      // horizontal line: A just above, B just below
+      tagA.style.top = `calc(${pct}% - 28px)`;
+      tagA.style.bottom = "auto";
+      tagA.style.left = "10px";
+      tagA.style.right = "auto";
+      tagA.style.transform = "none";
+      tagB.style.top = `calc(${pct}% + 8px)`;
+      tagB.style.bottom = "auto";
+      tagB.style.left = "10px";
+      tagB.style.right = "auto";
+      tagB.style.transform = "none";
+    } else {
+      // vertical line: A left of line, B right of line
+      tagA.style.top = "10px";
+      tagA.style.bottom = "auto";
+      tagA.style.left = "auto";
+      tagA.style.right = `calc(${(100 - p * 100).toFixed(3)}% + 8px)`;
+      tagA.style.transform = "none";
+      tagB.style.top = "10px";
+      tagB.style.bottom = "auto";
+      tagB.style.left = `calc(${pct}% + 8px)`;
+      tagB.style.right = "auto";
+      tagB.style.transform = "none";
+    }
+  }
+
   function applyWipe() {
     const paneB = $("#pane-b");
     const handle = $("#wipe-handle");
     if (state.mode !== "wipe" || state.images.length < 2) {
       paneB.style.clipPath = "";
+      clearTagsFromWipe();
       return;
     }
     const p = Math.min(0.98, Math.max(0.02, state.wipePos));
@@ -196,20 +243,21 @@
       handle.style.top = `${(p * 100).toFixed(3)}%`;
       handle.style.bottom = "auto";
       handle.style.width = "auto";
-      handle.style.height = "28px";
+      handle.style.height = "";
       handle.style.marginLeft = "0";
-      handle.style.marginTop = "-14px";
+      handle.style.marginTop = "";
     } else {
       paneB.style.clipPath = `inset(0 0 0 ${(p * 100).toFixed(3)}%)`;
       handle.style.top = "0";
       handle.style.bottom = "0";
       handle.style.left = `${(p * 100).toFixed(3)}%`;
       handle.style.right = "auto";
-      handle.style.width = "28px";
+      handle.style.width = "";
       handle.style.height = "auto";
-      handle.style.marginLeft = "-14px";
+      handle.style.marginLeft = "";
       handle.style.marginTop = "0";
     }
+    positionTagsOnWipeLine(p, portrait);
   }
 
   function applyFade() {
