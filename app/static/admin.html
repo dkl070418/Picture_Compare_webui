@@ -99,6 +99,27 @@
 
   <div id="toast" class="toast hidden"></div>
 
+  <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="图片预览">
+    <div class="lightbox-bar">
+      <div class="lightbox-title">
+        <span id="lb-title">预览</span>
+        <span class="lightbox-meta" id="lb-meta"></span>
+      </div>
+      <div class="lightbox-tools">
+        <button type="button" class="btn small" id="lb-zoom-out" title="缩小">−</button>
+        <span class="lightbox-zoom-label" id="lb-zoom-label">100%</span>
+        <button type="button" class="btn small" id="lb-zoom-in" title="放大">+</button>
+        <button type="button" class="btn small" id="lb-fit" title="适应窗口">适应</button>
+        <button type="button" class="btn small" id="lb-actual" title="原始像素 1:1">1:1</button>
+        <button type="button" class="btn small" id="lb-close" title="关闭 (Esc)">关闭</button>
+      </div>
+    </div>
+    <div class="lightbox-stage" id="lb-stage">
+      <img id="lb-img" alt="" draggable="false" />
+      <div class="lightbox-hint" id="lb-hint">滚轮缩放 · 拖动平移 · 双击切换适应/1:1</div>
+    </div>
+  </div>
+
   <dialog id="group-edit-dialog">
     <form method="dialog" id="group-edit-form" class="dialog-form">
       <h3>编辑对比组</h3>

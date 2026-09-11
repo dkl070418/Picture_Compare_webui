@@ -126,7 +126,53 @@ def run_ui(share_id: str) -> int:
         page.wait_for_selector(".card", timeout=5000)
         cards = page.locator("#library-grid .card")
         check("library has fixture cards", cards.count() >= 5, f"count={cards.count()}")
+
+        # Larger card grid
+        card_box = cards.nth(0).bounding_box()
+        check("card width >= 240", bool(card_box and card_box["width"] >= 240), str(card_box))
+        check(
+            "each card has zoom button",
+            page.locator("#library-grid .card-zoom").count() >= 5,
+        )
         page.screenshot(path=str(SHOTS / "01_admin_library.png"), full_page=True)
+
+        # Lightbox fit/zoom
+        page.locator("#library-grid .card-zoom").nth(0).click()
+        page.wait_for_selector("#lightbox.open", timeout=3000)
+        check("lightbox opens", page.locator("#lightbox.open").count() == 1)
+        page.wait_for_function(
+            "() => { const i=document.querySelector('#lb-img'); return i && i.complete && i.naturalWidth>0; }",
+            timeout=8000,
+        )
+        page.wait_for_timeout(300)
+        label = page.inner_text("#lb-zoom-label")
+        check("lightbox shows zoom %", label.endswith("%"), label)
+        fit_scale = float(label.replace("%", "")) / 100
+        check("fit scale is positive", fit_scale > 0, str(fit_scale))
+
+        # zoom in via button
+        page.click("#lb-zoom-in")
+        page.wait_for_timeout(150)
+        label2 = page.inner_text("#lb-zoom-label")
+        scale2 = float(label2.replace("%", "")) / 100
+        check("zoom-in increases scale", scale2 > fit_scale, f"{fit_scale} -> {scale2}")
+
+        # 1:1 actual pixels
+        page.click("#lb-actual")
+        page.wait_for_timeout(200)
+        check("1:1 shows 100%", page.inner_text("#lb-zoom-label") == "100%")
+
+        # fit again (window vs image resolution)
+        page.click("#lb-fit")
+        page.wait_for_timeout(200)
+        fit2 = float(page.inner_text("#lb-zoom-label").replace("%", "")) / 100
+        check("fit recomputed", fit2 > 0)
+        page.screenshot(path=str(SHOTS / "01b_lightbox_fit.png"))
+
+        # Esc closes
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(200)
+        check("lightbox closed by Esc", page.locator("#lightbox.open").count() == 0)
 
         # Select first two cards
         cards.nth(0).locator(".card-check").click()
