@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import uuid
 from pathlib import Path
 from typing import Any
@@ -10,7 +11,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from PIL import Image as PILImage
 from pydantic import BaseModel, Field
-from sqlalchemy import delete, or_, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session as SASession
 
 from .auth import SESSION_COOKIE, make_session_token, optional_admin, require_admin
@@ -477,7 +478,13 @@ def admin_page():
 @app.get("/s/{share_id}", response_class=HTMLResponse)
 def share_page(share_id: str):
     html = _read_static("share.html")
-    html = html.replace("__SHARE_ID__", share_id)
+    # Safe JS string injection (json + prevent </script> breakout)
+    token = json.dumps(share_id).replace("<", "\\u003c").replace(">", "\\u003e")
+    html = html.replace(
+        "window.__SHARE_ID__ = null;",
+        f"window.__SHARE_ID__ = {token};",
+        1,
+    )
     return HTMLResponse(html)
 
 

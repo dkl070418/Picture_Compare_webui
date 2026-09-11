@@ -192,6 +192,37 @@ def main():
     r = client.get("/api/admin/images")
     check("after logout 401", r.status_code == 401)
 
+    # Frontend safety checks
+    r = client.get(f"/s/{share_id}")
+    check(
+        "share page injects JSON string id",
+        f'window.__SHARE_ID__ = "{share_id}";' in r.text,
+        r.text[-200:],
+    )
+
+    evil = "foo';alert(1);x='"
+    r = client.get(f"/s/{evil}")
+    expected = (
+        "window.__SHARE_ID__ = "
+        + __import__("json").dumps(evil).replace("<", "\\u003c").replace(">", "\\u003e")
+        + ";"
+    )
+    check(
+        "evil share id is a JSON string (no JS breakout)",
+        expected in r.text,
+        [ln for ln in r.text.splitlines() if "SHARE_ID" in ln],
+    )
+    r2 = client.get("/s/x<script>y")
+    check(
+        "script tag in id unicode-escaped",
+        "\\u003cscript\\u003e" in r2.text,
+        [ln for ln in r2.text.splitlines() if "SHARE_ID" in ln],
+    )
+
+    share_js = (ROOT / "app" / "static" / "share.js").read_text(encoding="utf-8")
+    check("share.js defines $$", "const $$" in share_js)
+    check("share.js uses $$ for mode buttons", '$$(".mode")' in share_js)
+
     failed = [n for n, ok, _ in results if not ok]
     print("-" * 40)
     print(f"Total {len(results)}, failed {len(failed)}")

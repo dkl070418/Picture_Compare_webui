@@ -1,6 +1,7 @@
 (function () {
   const shareId = window.__SHARE_ID__;
   const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 
   const state = {
     images: [],
@@ -217,13 +218,30 @@
       else if (e.key === "3") setMode("fade");
       else if (e.key === "ArrowLeft") {
         if (state.images.length < 2) return;
-        state.indexA = (state.indexA - 1 + state.images.length) % state.images.length;
-        if (state.indexA === state.indexB) state.indexA = (state.indexA - 1 + state.images.length) % state.images.length;
+        if (state.images.length === 2) {
+          // Swap A/B
+          const t = state.indexA;
+          state.indexA = state.indexB;
+          state.indexB = t;
+        } else {
+          state.indexA = (state.indexA - 1 + state.images.length) % state.images.length;
+          if (state.indexA === state.indexB) {
+            state.indexA = (state.indexA - 1 + state.images.length) % state.images.length;
+          }
+        }
         renderImages();
       } else if (e.key === "ArrowRight") {
         if (state.images.length < 2) return;
-        state.indexB = (state.indexB + 1) % state.images.length;
-        if (state.indexB === state.indexA) state.indexB = (state.indexB + 1) % state.images.length;
+        if (state.images.length === 2) {
+          const t = state.indexA;
+          state.indexA = state.indexB;
+          state.indexB = t;
+        } else {
+          state.indexB = (state.indexB + 1) % state.images.length;
+          if (state.indexB === state.indexA) {
+            state.indexB = (state.indexB + 1) % state.images.length;
+          }
+        }
         renderImages();
       }
     });

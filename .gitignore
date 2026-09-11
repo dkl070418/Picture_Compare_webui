@@ -1,8 +1,10 @@
 data/
 data_test_e2e/
+data_live_check/
 *.db
 __pycache__/
 *.pyc
 .venv/
 .worktrees/
 *.log
+
