@@ -46,6 +46,7 @@ class Settings:
         changed = False
 
         env_password = os.environ.get("ADMIN_PASSWORD", "").strip()
+        self.password_from_env = bool(env_password)
         if env_password:
             self.password_hash = _ph.hash(env_password)
             self.generated_password = None
@@ -78,6 +79,16 @@ class Settings:
             return _ph.verify(self.password_hash, password)
         except Exception:
             return False
+
+    def set_password(self, password: str) -> None:
+        """Update runtime hash and persist to config.json."""
+        self.password_hash = _ph.hash(password)
+        self.generated_password = None
+        cfg = _load_config()
+        cfg["password_hash"] = self.password_hash
+        if not cfg.get("secret_key"):
+            cfg["secret_key"] = self.secret_key
+        _save_config(cfg)
 
 
 settings = Settings()

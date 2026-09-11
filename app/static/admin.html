@@ -49,6 +49,7 @@
         <button class="nav-item" data-tab="shares">分享</button>
       </nav>
       <div class="sidebar-foot">
+        <button id="btn-change-password" class="btn ghost">修改口令</button>
         <button id="btn-logout" class="btn ghost">退出登录</button>
       </div>
     </aside>
@@ -107,6 +108,29 @@
       <div class="dialog-actions">
         <button value="cancel" class="btn">取消</button>
         <button id="ge-save" value="default" class="btn primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="password-dialog">
+    <form id="password-form" class="dialog-form">
+      <h3>修改管理员口令</h3>
+      <label class="field">
+        <span>当前口令</span>
+        <input type="password" id="pw-current" autocomplete="current-password" required />
+      </label>
+      <label class="field">
+        <span>新口令（至少 4 位）</span>
+        <input type="password" id="pw-new" autocomplete="new-password" minlength="4" required />
+      </label>
+      <label class="field">
+        <span>确认新口令</span>
+        <input type="password" id="pw-confirm" autocomplete="new-password" minlength="4" required />
+      </label>
+      <p id="pw-error" class="error"></p>
+      <div class="dialog-actions">
+        <button type="button" id="pw-cancel" class="btn">取消</button>
+        <button type="submit" class="btn primary">保存</button>
       </div>
     </form>
   </dialog>

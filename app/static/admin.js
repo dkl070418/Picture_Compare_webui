@@ -393,6 +393,49 @@ function bindUI() {
     showLogin();
   });
 
+  $("#btn-change-password").addEventListener("click", () => {
+    $("#pw-current").value = "";
+    $("#pw-new").value = "";
+    $("#pw-confirm").value = "";
+    $("#pw-error").textContent = "";
+    $("#password-dialog").showModal();
+    $("#pw-current").focus();
+  });
+
+  $("#pw-cancel").addEventListener("click", () => {
+    $("#password-dialog").close();
+  });
+
+  $("#password-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const current_password = $("#pw-current").value;
+    const new_password = $("#pw-new").value;
+    const confirm = $("#pw-confirm").value;
+    const errEl = $("#pw-error");
+    errEl.textContent = "";
+    if (new_password.length < 4) {
+      errEl.textContent = "新口令至少 4 位";
+      return;
+    }
+    if (new_password !== confirm) {
+      errEl.textContent = "两次输入的新口令不一致";
+      return;
+    }
+    try {
+      const res = await api("/api/admin/password", {
+        method: "POST",
+        body: { current_password, new_password },
+      });
+      $("#password-dialog").close();
+      toast("口令已修改");
+      if (res && res.note) {
+        setTimeout(() => toast(res.note), 2400);
+      }
+    } catch (err) {
+      errEl.textContent = err.message || "修改失败";
+    }
+  });
+
   $$(".nav-item").forEach((btn) => {
     btn.addEventListener("click", () => switchTab(btn.dataset.tab));
   });

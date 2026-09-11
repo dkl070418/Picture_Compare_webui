@@ -186,6 +186,36 @@ def main():
     r = client.get(f"/api/share/{share2['id']}")
     check("share after image delete has 1 image", len(r.json()["images"]) == 1, r.text)
 
+    # Change password
+    r = client.post(
+        "/api/admin/password",
+        json={"current_password": "wrong", "new_password": "newpass99"},
+    )
+    check("change password wrong current 401", r.status_code == 401, r.text)
+
+    r = client.post(
+        "/api/admin/password",
+        json={"current_password": "test-pass-123", "new_password": "ab"},
+    )
+    check("change password too short 422", r.status_code == 422, r.text)
+
+    r = client.post(
+        "/api/admin/password",
+        json={"current_password": "test-pass-123", "new_password": "test-pass-123"},
+    )
+    check("change password same as current 400", r.status_code == 400, r.text)
+
+    r = client.post(
+        "/api/admin/password",
+        json={"current_password": "test-pass-123", "new_password": "new-pass-99"},
+    )
+    check("change password ok", r.status_code == 200 and r.json().get("ok") is True, r.text)
+
+    r = client.post("/api/login", json={"password": "test-pass-123"})
+    check("old password rejected after change", r.status_code == 401)
+    r = client.post("/api/login", json={"password": "new-pass-99"})
+    check("new password works", r.status_code == 200, r.text)
+
     # Logout
     r = client.post("/api/logout")
     check("logout", r.status_code == 200)

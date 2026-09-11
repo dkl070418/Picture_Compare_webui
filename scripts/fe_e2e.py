@@ -149,6 +149,32 @@ def run_ui(share_id: str) -> int:
         else:
             check("note edit input opened", False)
 
+        # Change password via UI
+        page.click("#btn-change-password")
+        page.wait_for_selector("#password-dialog[open]", timeout=3000)
+        check("password dialog opens", True)
+        page.fill("#pw-current", "admin123")
+        page.fill("#pw-new", "admin456")
+        page.fill("#pw-confirm", "admin456")
+        page.click("#password-form button[type=submit]")
+        page.wait_for_timeout(500)
+        check(
+            "password dialog closed after save",
+            not page.locator("#password-dialog").evaluate("el => el.open"),
+        )
+        # restore original password so later steps / re-runs stay stable
+        page.click("#btn-change-password")
+        page.wait_for_selector("#password-dialog[open]")
+        page.fill("#pw-current", "admin456")
+        page.fill("#pw-new", "admin123")
+        page.fill("#pw-confirm", "admin123")
+        page.click("#password-form button[type=submit]")
+        page.wait_for_timeout(500)
+        check(
+            "password restored to admin123",
+            not page.locator("#password-dialog").evaluate("el => el.open"),
+        )
+
         # Groups tab
         page.click('.nav-item[data-tab="groups"]')
         page.wait_for_timeout(200)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import uuid
 from pathlib import Path
 from typing import Any
@@ -98,6 +99,11 @@ class LoginBody(BaseModel):
     password: str
 
 
+class ChangePasswordBody(BaseModel):
+    current_password: str = Field(min_length=1)
+    new_password: str = Field(min_length=4, max_length=128)
+
+
 @app.post("/api/login")
 def login(body: LoginBody, response: Response):
     if not settings.verify_password(body.password):
@@ -111,6 +117,27 @@ def login(body: LoginBody, response: Response):
         max_age=60 * 60 * 24 * 30,
     )
     return response
+
+
+@app.post("/api/admin/password")
+def change_password(
+    body: ChangePasswordBody,
+    _: None = Depends(require_admin),
+):
+    if not settings.verify_password(body.current_password):
+        raise HTTPException(status_code=401, detail="当前口令不正确")
+    if body.new_password != body.new_password.strip():
+        raise HTTPException(status_code=400, detail="新口令不能以空白字符开头或结尾")
+    if body.current_password == body.new_password:
+        raise HTTPException(status_code=400, detail="新口令不能与当前口令相同")
+    settings.set_password(body.new_password)
+    note = None
+    if settings.password_from_env or os.environ.get("ADMIN_PASSWORD", "").strip():
+        note = (
+            "口令已更新并写入配置文件。"
+            "若启动环境设置了 ADMIN_PASSWORD，重启后会覆盖本次修改，请去掉该环境变量。"
+        )
+    return {"ok": True, "note": note}
 
 
 @app.post("/api/logout")
