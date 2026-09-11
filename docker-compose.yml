@@ -1,6 +1,6 @@
 services:
   picture-compare:
-    image: crpi-wjscuxkxm163odo3.cn-hangzhou.personal.cr.aliyuncs.com/dkl091219/picture-compare:1.0.0
+    image: crpi-wjscuxkxm163odo3.cn-hangzhou.personal.cr.aliyuncs.com/dkl091219/picture_comparetool:1.0.0
     container_name: picture-compare
     ports:
       - "18765:18765"
