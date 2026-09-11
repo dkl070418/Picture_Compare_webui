@@ -438,16 +438,14 @@
       e.preventDefault();
     });
 
-    // --- touch: handle owns wipe; stage: pan when zoomed / wipe when not; 2-finger pinch ---
-    let touchMode = null; // 'wipe' | 'pan' | 'pinch'
+    // --- touch: 1 finger = wipe only (not zoomed); 2 fingers = pinch + pan ---
+    let touchMode = null; // 'wipe' | 'pinch'
     let pinch = null;
-    let panLast = null;
     let lastTap = 0;
 
     function nearHandle(t) {
       if (state.mode !== "wipe") return false;
       const hr = handle.getBoundingClientRect();
-      // generous hit slop for fat fingers
       const pad = 18;
       return (
         t.clientX >= hr.left - pad &&
@@ -465,10 +463,8 @@
 
         if (e.touches.length === 1) {
           const t = e.touches[0];
-          if (nearHandle(t)) {
-            // let handle listener deal with it (it will stopPropagation)
-            return;
-          }
+          if (nearHandle(t)) return; // handle listener owns it
+
           const now = Date.now();
           if (now - lastTap < 280) {
             lastTap = 0;
@@ -478,16 +474,14 @@
             return;
           }
           lastTap = now;
-          if (isZoomed()) {
-            touchMode = "pan";
-            panLast = { x: t.clientX, y: t.clientY };
-          } else if (state.mode === "wipe" && state.images.length > 1) {
+
+          // Single finger: wipe only when not zoomed; never pan
+          if (!isZoomed() && state.mode === "wipe" && state.images.length > 1) {
             touchMode = "wipe";
             state.wipePos = wipePosFrom(t.clientX, t.clientY);
             applyWipe();
           } else {
-            touchMode = "pan";
-            panLast = { x: t.clientX, y: t.clientY };
+            touchMode = null;
           }
           e.preventDefault();
         } else if (e.touches.length === 2) {
@@ -511,13 +505,13 @@
       "touchmove",
       (e) => {
         if (handleDrag) return;
+        // Two fingers: pinch zoom + pan together (midpoint follows fingers)
         if (touchMode === "pinch" && e.touches.length === 2 && pinch) {
           const [a, b] = e.touches;
           const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
           const cx = (a.clientX + b.clientX) / 2;
           const cy = (a.clientY + b.clientY) / 2;
           const next = pinch.scale * (dist / Math.max(1, pinch.dist));
-          // Keep image point under the original midpoint glued to the current midpoint
           zoomKeepingPoint(
             pinch.cx,
             pinch.cy,
@@ -531,16 +525,7 @@
           e.preventDefault();
           return;
         }
-        if (touchMode === "pan" && e.touches.length === 1 && panLast) {
-          const t = e.touches[0];
-          zoom.x += t.clientX - panLast.x;
-          zoom.y += t.clientY - panLast.y;
-          panLast = { x: t.clientX, y: t.clientY };
-          applyZoom();
-          e.preventDefault();
-          return;
-        }
-        if (touchMode === "wipe" && e.touches.length === 1) {
+        if (touchMode === "wipe" && e.touches.length === 1 && !isZoomed()) {
           const t = e.touches[0];
           state.wipePos = wipePosFrom(t.clientX, t.clientY);
           applyWipe();
@@ -555,10 +540,13 @@
       if (e.touches.length < 2) pinch = null;
       if (e.touches.length === 0) {
         touchMode = null;
-        panLast = null;
       } else if (e.touches.length === 1) {
-        touchMode = isZoomed() ? "pan" : state.mode === "wipe" ? "wipe" : "pan";
-        panLast = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        // left pinch: stop panning; only wipe if still at fit
+        if (!isZoomed() && state.mode === "wipe") {
+          touchMode = "wipe";
+        } else {
+          touchMode = null;
+        }
       }
     });
 
