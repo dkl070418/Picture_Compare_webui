@@ -285,7 +285,38 @@ def run_ui(share_id: str) -> int:
             check("wipe clip moved", "inset" in (clip or ""), clip or "")
             page.screenshot(path=str(SHOTS / "07_share_wipe_dragged.png"))
 
+        # Zoom tools: fit → 100% → fit
+        check("zoom label starts as fit", page.inner_text("#zoom-label") == "适应")
+        page.click("#zoom-100")
+        page.wait_for_timeout(250)
+        z100 = page.inner_text("#zoom-label")
+        check("zoom 100% label", z100.endswith("%") and z100 != "适应", z100)
+        ta = page.eval_on_selector("#img-a", "el => el.style.transform")
+        tb = page.eval_on_selector("#img-b", "el => el.style.transform")
+        check("A/B share same transform", ta == tb and "scale" in (ta or ""), f"{ta} | {tb}")
+        page.click("#zoom-in")
+        page.wait_for_timeout(150)
+        zin = float(page.inner_text("#zoom-label").replace("%", "")) / 100
+        z100f = float(z100.replace("%", "")) / 100
+        check("zoom-in increases", zin > z100f, f"{z100f}->{zin}")
+        page.click("#zoom-fit")
+        page.wait_for_timeout(150)
+        check("zoom fit resets", page.inner_text("#zoom-label") == "适应")
+        ta2 = page.eval_on_selector("#img-a", "el => el.style.transform")
+        check("fit clears pan/scale", ta2 in ("", "none") or "scale(1)" in ta2.replace(" ", ""), ta2)
+
+        # Mobile portrait pinch-like zoom via buttons + pan transform
+        page.set_viewport_size({"width": 390, "height": 844})
+        page.wait_for_timeout(200)
+        page.click("#zoom-100")
+        page.wait_for_timeout(200)
+        check("portrait 100% zoom", page.inner_text("#zoom-label").endswith("%"))
+        page.screenshot(path=str(SHOTS / "09b_share_portrait_zoom100.png"))
+        page.click("#zoom-fit")
+        page.wait_for_timeout(100)
+
         # Fade mode
+        page.set_viewport_size({"width": 1280, "height": 800})
         page.click('.mode[data-mode="fade"]')
         page.wait_for_timeout(200)
         check("fade slider visible", page.locator("#fade-slider").is_visible())

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
   <title>图片对比</title>
   <link rel="stylesheet" href="/static/share.css" />
 </head>
@@ -16,10 +16,19 @@
         <h1 id="share-title">图片对比</h1>
         <p id="share-sub"></p>
       </div>
-      <div class="modes" role="tablist" aria-label="对比模式">
-        <button class="mode" data-mode="split" title="并排 (1)">并排</button>
-        <button class="mode active" data-mode="wipe" title="擦除 (2)">擦除</button>
-        <button class="mode" data-mode="fade" title="叠透 (3)">叠透</button>
+      <div class="top-right">
+        <div class="zoom-tools" role="group" aria-label="缩放">
+          <button type="button" id="zoom-out" title="缩小">−</button>
+          <span id="zoom-label" title="当前缩放">适应</span>
+          <button type="button" id="zoom-in" title="放大">+</button>
+          <button type="button" id="zoom-fit" class="zoom-chip">适应</button>
+          <button type="button" id="zoom-100" class="zoom-chip">100%</button>
+        </div>
+        <div class="modes" role="tablist" aria-label="对比模式">
+          <button class="mode" data-mode="split" title="并排 (1)">并排</button>
+          <button class="mode active" data-mode="wipe" title="擦除 (2)">擦除</button>
+          <button class="mode" data-mode="fade" title="叠透 (3)">叠透</button>
+        </div>
       </div>
     </header>
 
@@ -41,6 +50,7 @@
           <label>透明度 <span id="fade-val">50%</span></label>
           <input id="fade-range" type="range" min="0" max="100" value="50" />
         </div>
+        <div class="zoom-hint" id="zoom-hint">双指缩放 · 单指拖动 · 双击 100%/适应</div>
       </div>
     </main>
 

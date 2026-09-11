@@ -92,6 +92,84 @@ button, input { font: inherit; color: inherit; }
   color: #c7d7ff;
 }
 
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.zoom-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 6px;
+  flex: 0 0 auto;
+}
+.zoom-tools button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 999px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.zoom-tools button:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+.zoom-tools .zoom-chip {
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+}
+#zoom-label {
+  min-width: 40px;
+  text-align: center;
+  font-size: 12px;
+  color: #d1d5db;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.zoom-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  z-index: 6;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 999px;
+  padding: 6px 12px;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 0.6s ease;
+}
+.zoom-hint.fade-out {
+  opacity: 0;
+}
+
+.stage.dragging {
+  cursor: grabbing;
+}
+.stage.is-zoomed {
+  cursor: grab;
+}
+.stage.is-zoomed .pane img {
+  /* transform set in JS */
+  will-change: transform;
+}
+
 .stage-wrap {
   min-height: 0;
   display: grid;
@@ -345,7 +423,21 @@ button, input { font: inherit; color: inherit; }
 /* Very short landscape phones */
 @media (max-height: 420px) {
   #app { gap: 6px; padding-top: calc(6px + var(--safe-t)); padding-bottom: calc(6px + var(--safe-b)); }
-  .top { min-height: 36px; }
+  .top { min-height: 36px; flex-wrap: wrap; gap: 6px; }
+  .title-block h1 { font-size: 13px; }
+  .title-block p { display: none; }
+  .top-right { width: 100%; justify-content: space-between; }
+  .mode { padding: 6px 10px; font-size: 12px; }
+  .zoom-tools button { min-width: 26px; height: 26px; }
   .thumb { width: 56px; height: 40px; }
   .fade-slider { bottom: 8px; padding: 6px 12px; }
+  .zoom-hint { bottom: 8px; font-size: 11px; }
+}
+
+/* Narrow portrait: stack mode chips + zoom tools */
+@media (max-width: 420px) {
+  .top { flex-direction: column; align-items: stretch; gap: 8px; }
+  .top-right { justify-content: space-between; }
+  .modes { flex: 1; justify-content: center; }
+  .mode { flex: 1; text-align: center; }
 }
