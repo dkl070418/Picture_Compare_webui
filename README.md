@@ -90,6 +90,33 @@ docker-compose.yml
 
 完整交互式文档：服务启动后访问 `/api/docs`。
 
+## GitHub Actions 自动构建镜像
+
+仓库已含工作流 [`.github/workflows/docker-aliyun.yml`](.github/workflows/docker-aliyun.yml)：推送到 `main` 或打 `v*` 标签时，在 GitHub 上构建并推送到阿里云。
+
+**1. 配置 Secrets**（仓库 → Settings → Secrets and variables → Actions）：
+
+| Name | 值 |
+|------|-----|
+| `ALIYUN_CR_USERNAME` | `dkl091219` |
+| `ALIYUN_CR_PASSWORD` | 阿里云容器镜像**访问密码**（不是登录密码，在镜像服务控制台设置） |
+
+**2. 触发**
+
+- 推送到 `main` → 镜像标签：`main`、`latest`
+- 推送标签如 `v1.0.1` → 标签：`1.0.1`、`1.0`、`latest`
+- 也可在 Actions 页手动 `workflow_dispatch`
+
+**3. NAS 拉取新镜像**
+
+```bash
+cd ~/apps/picture_compare
+docker compose pull
+docker compose up -d
+```
+
+本地仍在 NAS 上构建时，命令见上一节。
+
 ## 开发与测试
 
 ```powershell
